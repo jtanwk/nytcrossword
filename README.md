@@ -2,14 +2,6 @@
 ================
 September 2, 2017
 
--   [Getting The Data](#getting-the-data)
--   [Some Questions](#some-questions)
-    -   [What are the most common answers?](#what-are-the-most-common-answers)
-    -   [Are words getting longer? Shorter?](#are-words-getting-longer-shorter)
-    -   [What words have emerged recently?](#what-words-have-emerged-recently)
--   [Summary](#summary)
--   [Further Steps](#further-steps)
-
 I do the New York Times crossword pretty much every day. 90% of the time, I'll tackle it before the day actually arrives (they launch at 11pm the night before, except Sunday's, which launches at 6pm on Saturday). It's the closest thing I have to an evening ritual.
 
 Other people have already done pretty cool explorations of crossword text data. They've looked at at comparisons to the [Oxford English Dictionary](http://blog.nycdatascience.com/student-works/web-scraping/nyt-crossword-puzzle-approximately-cool-oed/) and the [Google Books](https://noahveltman.com/crossword/about.html) corpuses (corpi?) respectively. My favorite: last year, the NYTimes themselves published an interactive piece exploring [the changing meanings of clues over the years](https://www.nytimes.com/interactive/2016/02/07/opinion/what-74-years-of-times-crosswords-say-about-the-words-we-use.html?mcubz=3).
