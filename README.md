@@ -11,9 +11,9 @@ Meanwhile, my goal here (aside from indulging my inner crossword geek) is to try
 Getting The Data
 ----------------
 
-I didn't scrape NYTimes.com itself. Why? Because crosswords tend to arrive blank, and I wanted answers. Instead, I used the `rvest` package and [Selector Gadget](http://selectorgadget.com/) to gather historical puzzle data from the amazing resource that is [XWord Info](https://www.xwordinfo.com/).
+I didn't scrape NYTimes.com itself. Why? Because crosswords tend to arrive blank, and I wanted answers. Instead, I used the `rvest` package and [Selector Gadget](http://selectorgadget.com/) to gather historical puzzle data from the amazing resource that is [XWord Info](https://www.xwordinfo.com/). If you scrape their website, I strongly suggest a donation to keep them going - I did. There's lots of wonderful data there that I've barely attempted to sift through. 
 
-Although the NYTimes crossword has been around since far earlier than 1994, I chose to only look at puzzles from the Will Shortz era (1994 - present). I've chosen not to host the data here, but the [scraper code](https://github.com/jtanwk/nytcrossword/blob/master/1_crossword_scraper.R) is available as part of this repository.
+Although the NYTimes crossword has been around since far earlier than 1994, I chose to only look at puzzles from the Will Shortz era (1994 - present). I've also chosen not to host the data here, but the [scraper code](https://github.com/jtanwk/nytcrossword/blob/master/1_crossword_scraper.R) is available as part of this repository.
 
 Some Questions
 --------------
@@ -111,3 +111,4 @@ There were lots of ideas that I played around with that were either less compell
 -   What languages are represented the most? Many loanwords or straight-up foreign language words exist in the crossword but are very difficult to detect computationally out of the context of a sentence.
 -   Who are the most prolific crossword submitters, and do they have distinct lexical differences between them?
 -   Any analysis involving the text of the crossword *clues* and not just the answers.
+-   Any analysis involving data surrounding user behaviors possible on NYTimes (e.g. solve times, checking answers, mobile vs. browser activity)
