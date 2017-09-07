@@ -4,7 +4,7 @@ September 2, 2017
 
 Doing the New York Times Crossword is the closest thing I have to an evening ritual. Most of the time, I'll tackle it before the day actually arrives - they launch at 10pm the night before (except Sunday's, which launches at 6pm on Saturday).
 
-Other people have already done pretty cool explorations of crossword text data. They've looked at at comparisons to the [Oxford English Dictionary](http://blog.nycdatascience.com/student-works/web-scraping/nyt-crossword-puzzle-approximately-cool-oed/) and the [Google Books](https://noahveltman.com/crossword/about.html) corpuses (corpi?) respectively. My favorite piece so far: last year, the NYTimes themselves published an interactive piece exploring [the changing meanings of clues over the years](https://www.nytimes.com/interactive/2016/02/07/opinion/what-74-years-of-times-crosswords-say-about-the-words-we-use.html?mcubz=3).
+Other people have already done pretty cool explorations of crossword text data. They've looked at at comparisons to the [Oxford English Dictionary](http://blog.nycdatascience.com/student-works/web-scraping/nyt-crossword-puzzle-approximately-cool-oed/) and the [Google Books](https://noahveltman.com/crossword/about.html) corpora respectively. My favorite piece so far: last year, the NYTimes themselves published an interactive piece exploring [the changing meanings of clues over the years](https://www.nytimes.com/interactive/2016/02/07/opinion/what-74-years-of-times-crosswords-say-about-the-words-we-use.html?mcubz=3).
 
 Meanwhile, my goal here (aside from indulging my inner crossword geek) is to try out a few new packages: website scraping with `rvest` and wrangling text data with `tidytext`.
 
