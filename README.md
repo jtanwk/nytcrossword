@@ -99,7 +99,7 @@ If unique to a year's crossword answer corpus, it looks like a given word only n
 
 ![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/ccccc.PNG?raw=true)
 
-What a beaut.
+What a beaut. (Also note that TTTTT, unlike the other two letters, only appeared twice and did not rank as important to 2013's corpus.)
 
 Further Steps
 -------------
