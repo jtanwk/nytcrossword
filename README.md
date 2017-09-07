@@ -97,7 +97,7 @@ If unique to a year's crossword answer corpus, it looks like a given word only n
 -   A manual look at the clues for IDRISELBA cited his roles in *The Wire* (2002-2004) once and *Mandela: Long Walk to Freedom* (2013) twice. Interestingly enough, no mention of the four films he's been in this year ( *Thor: Ragnarok* , *The Mountain Between Us*, *The Dark Tower* and *Molly's Game* ).
 -   What's the deal with CCCCC and UUUUU in 2013? A count by date shows that both answers actually appeared three distinct times, _all in the same puzzle_. I looked the puzzle up out of curiosity and was faced with this monster, courtesy of Jeff Chen:
 
-![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/ccccc.png?raw=true)
+![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/ccccc.PNG?raw=true)
 
 What a beaut.
 
