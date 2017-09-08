@@ -8,6 +8,7 @@
 library(tidyverse)
 library(tidytext)
 library(stringr)
+library(viridis) # colorblind-friendly palettes for charts
 
 options(stringsAsFactors = FALSE)
 
@@ -28,21 +29,43 @@ crossword %>%
 ## Plotting above by year
 
 crossword %>%
-  filter(word == "ERA" | word == "AREA" | word == "ERE" | word == "ONE" | word == "ELI") %>%
+  filter(word %in% c("ERA", "AREA", "ERE", "ONE", "ELI")) %>%
+  group_by(year) %>%
   count(year, word, sort = TRUE) %>%
   ggplot(aes(x = year, y = n)) +
   geom_point() +
-  geom_smooth(method = 'lm') +
-  facet_wrap(~word, ncol = 2)
+  geom_smooth(method = 'lm',
+              fill = NA) +
+  facet_wrap(~word) +
+  theme_bw() +
+  scale_x_continuous(breaks = seq(1996, 2016, 4)) +
+  labs(y = "Number of Appearances",
+       x = "Year",
+       title = "Appearance Frequency of Top 5 NYTimes Crossword Answers", 
+       subtitle = "Using puzzles from the Shortz Era (1994-2017)")
+
+ggsave("images/cw_top5_freq.png", width = 8, height = 6)
 
 ##### Are words getting longer? Shorter?
 
 crossword %>%
-  group_by(year) %>%
-  summarise(avg = mean(nchar(word)), sort = TRUE) %>%
-  ggplot(aes(x = year, y = avg)) +
-  geom_point() +
-  geom_smooth(method = 'lm')
+  mutate(cwdate = as.Date(cwdate)) %>%
+  group_by(cwdate) %>%
+  summarise(avg = mean(nchar(word))) %>%
+  ggplot(aes(x = cwdate, y = avg)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = 'lm',
+              color = "red",
+              size = 1.2,
+              fill = NA) +
+  theme_minimal() +
+  scale_y_continuous(breaks = seq(4, 8, 0.5)) +
+  labs(x = "Date", 
+       y = "Average Letter Count",
+       title = "Average Length of NYTimes Crossword Answers",
+       subtitle = "Using puzzles from the Shortz Era (1994-2017). Each point represents one crossword puzzle.")
+
+ggsave("images/cw_avglength.png", width = 8, height = 6)
 
 ## Plotting the above by day of the week, ordered:
 
@@ -57,6 +80,53 @@ crossword %>%
   geom_smooth(method = 'lm') +
   facet_wrap(~cwday, nrow = 1)
 
+## Revised version of above with feedback:
+
+crossword %>%
+  filter(cwday != "NA") %>%
+  mutate(cwday = factor(cwday, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>%
+  mutate(cwdate = as.Date(cwdate)) %>%
+  group_by(cwdate, cwday) %>%
+  summarise(avg = mean(nchar(word))) %>%
+  ggplot(aes(x = cwdate, y = avg)) +
+  geom_point(aes(color = cwday),
+             show.legend = FALSE,
+             alpha = 0.3) +
+  scale_color_viridis(discrete = TRUE, option = "viridis") +
+  geom_smooth(color = "black",
+              size = 1.1,
+              method = 'lm', 
+              fill = NA) +
+  facet_wrap(~cwday, nrow = 1) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  scale_x_date(date_labels = "%Y",
+               date_breaks = "4 years",
+               date_minor_breaks = "4 years") +
+  scale_y_continuous(breaks = seq(4, 8, 0.5)) +
+  labs(x = "Date", 
+       y = "Average Letter Count",
+       title = "Average Length of NYTimes Crossword Answers by Day",
+       subtitle = "Using puzzles from the Shortz Era (1994-2017). Each point represents one crossword puzzle, by day of the week.")
+
+ggsave("images/cw_avglength_byday.png", width = 8, height = 6)
+
+## Histogram of answer length by day
+
+crossword %>%
+  filter(cwday != "NA") %>%
+  filter(nchar(word) <= 21) %>%
+  mutate(cwday = factor(cwday, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>%
+  ggplot(aes(x = nchar(word))) +
+  geom_histogram(binwidth = 1) +
+  facet_wrap(~cwday, nrow = 1) +
+  theme_minimal() +
+  labs(y = "Number of Answers",
+       x = "Number of Letters in Answer",
+       title = "Histogram of NYTimes Crossword Answers by Number of Letters",
+       subtitle = "Using puzzles from the Shortz Era (1994-2017). Histograms are grouped by day of the week.")
+
+ggsave("images/cw_length_hist.png", width = 8, height = 6)
 
 ##### What are the most year-specific words? 
 
@@ -78,22 +148,40 @@ plot_year_words %>%
   group_by(year) %>%
   top_n(5) %>%
   ungroup %>%
-  ggplot(aes(x = word, y = tf_idf, fill = year)) +
+  ggplot(aes(x = word, y = tf_idf)) +
   geom_col(show.legend = FALSE) +
   facet_wrap(~year, ncol = 2, scales = "free") +
   coord_flip() +
-  labs(x = NULL, y = NULL)
+  labs(x = NULL, y = NULL) +
+  theme_minimal() +
+  labs(title = "Most Year-Unique Crossword Answers, 2013-2017",
+       subtitle = "As determined by tf-idf scores for single-year corpora.")
+
+ggsave("images/cw_tf_idf.png", width = 8, height = 6)
 
 ## Plotting above by word-year:
 
 crossword %>%
-  filter(word == "BAE" | word == "LGBT" | word == "IDRISELBA" | word == "ABBACY" | word == "ETSY" | word == "NSFW") %>%
+  filter(word %in% c("BAE", "LGBT", "IDRISELBA", "ABBACY", "ETSY", "NSFW")) %>%
   mutate(word = factor(word, levels = c("BAE", "LGBT", "IDRISELBA", "ABBACY", "ETSY", "NSFW"))) %>%
   count(year, word, sort = TRUE) %>%
-  ggplot(aes(x = year, y = n, fill = word)) +
+  ggplot(aes(x = year, y = n)) +
   geom_col(show.legend = FALSE) +
+  geom_text(aes(label = n), vjust = 1.25, color = "white") +
   facet_wrap(~word, ncol = 2) +
-  labs(x = NULL, y = "Word Appearance Frequency")
+  labs(x = NULL, 
+       y = "Number of Appearances",
+       title = "Appearance Frequency for 2017's \"Important\" Answers",
+       subtitle = "As determined by tf-idf scores for single-year corpora.")
+
+ggsave("images/cw_tf_idf_2017.png", width = 8, height = 6)
+
+## Use below command to find exact dates for clue lookups:
+
+crossword %>%
+  filter(word == "SIRI") %>%
+  count(year)
+
 
 ########## Unanswered questions:
 
