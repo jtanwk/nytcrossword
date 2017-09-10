@@ -55,6 +55,24 @@ Now we're getting somewhere. A few observations:
 -   Friday and Saturday words seem to be growing longer on average much faster than that of other days'.
 -   Sunday words, while described as comparable to Wednesdays or Thursdays in terms of difficulty, are probably a little longer on average to account for the larger grid.
 
+Now, what does this actually look like in practice? I pulled screenshots of the two puzzles with the [shortest](https://www.xwordinfo.com/Crossword?date=12/23/2008) and [longest](https://www.xwordinfo.com/Crossword?date=1/21/2005) average answer length:
+
+![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/short_puzzle.png?raw=true) ![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/long_puzzle.png?raw=true)
+
+Interesting note: both puzzles have roughly the same number of letters on the grid - the puzzle on the left has 45 "blocks" (black unused spaces) while the puzzle on the right has 38. That led me to look me at the *letter density* of a puzzle, calculated by the number of lettes on a grid / total grid space.
+
+### How does letter density vary by day? 
+
+Thankfully, one of the variables that I scraped was the block count for each puzzle. Again, blocks are the fully-black unused spaces on a puzzle grid. If grid sizes are staying the same but average letter count per answer is increasing, it follows that the letter density of each puzzle is increasing. It also seems like a good opportunity to find a standardized measure across puzzles of different grid sizes (looking at you, Sunday). But what does the data actually show?
+
+![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/cw_density_byday.png?raw=true)
+
+As expected. The only minor surprise here is that the range of letter densities seems to be a little narrower on Sundays than the rest of the week - I'm interpreting that as a regression to the mean.
+
+Again, a visual illustration of the puzzles with the lowest and highest letter densities: 
+
+![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/least_dense.png?raw=true) ![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/most_dense.png?raw=true)
+
 ### What words have emerged recently?
 
 When different words or phrases enter the lexicon, it's only a matter of time before they're referenced in popular media. I wanted to find the words that only became popular (in terms of the crossword) in recent years.
