@@ -41,6 +41,10 @@ Short of a slight downward trend, nothing really convincing yet. What about the 
 
 ### Are words getting longer? Shorter?
 
+The primary source of difficulty in puzzles, in my opinion, stems from giving you clues with any number of plausible answers. Unfortunately, as I was unable to scrape the clue text, we'll have to make do with a different proxy for puzzle difficulty: _average answer length_. 
+
+Why is this a useful proxy? Again, from purely anecdotal experience, the short answers are giveaways. They're there to provide much needed letter fragments for other longer answers that are much harder to guess from scratch. The more short answers there are, the more information you can easily lock down. Think of [*Wheel of Fortune*](https://en.wikipedia.org/wiki/Wheel_of_Fortune_(U.S._game_show)) - it's far easier to complete a phrase once you have most of the letters filled in than right at the start.
+
 Calculating the average length of all the crossword answers in each year, then plotting them:
 
 ![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/cw_avglength.png?raw=true)
@@ -55,9 +59,9 @@ Now we're getting somewhere. A few observations:
 -   Friday and Saturday words seem to be growing longer on average much faster than that of other days'.
 -   Sunday words, while described as comparable to Wednesdays or Thursdays in terms of difficulty, are probably a little longer on average to account for the larger grid.
 
-Now, what does this actually look like in practice? I pulled screenshots of the two puzzles with the [shortest](https://www.xwordinfo.com/Crossword?date=12/23/2008) and [longest](https://www.xwordinfo.com/Crossword?date=1/21/2005) average answer length:
+Now, what does this actually look like in practice? I pulled screenshots of the two puzzles with the [shortest](https://www.xwordinfo.com/Crossword?date=12/23/2008) and [longest](https://www.xwordinfo.com/Crossword?date=1/21/2005) average answer length respectively:
 
-![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/short_puzzle.png?raw=true) ![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/long_puzzle.png?raw=true)
+<img src="https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/short_puzzle.PNG?raw=true" width="400"> <img src="https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/long_puzzle.PNG?raw=true" width="400">
 
 Interesting note: both puzzles have roughly the same number of letters on the grid - the puzzle on the left has 45 "blocks" (black unused spaces) while the puzzle on the right has 38. That led me to look me at the *letter density* of a puzzle, calculated by the number of lettes on a grid / total grid space.
 
@@ -69,9 +73,11 @@ Thankfully, one of the variables that I scraped was the block count for each puz
 
 As expected. The only minor surprise here is that the range of letter densities seems to be a little narrower on Sundays than the rest of the week - I'm interpreting that as a regression to the mean.
 
-Again, a visual illustration of the puzzles with the lowest and highest letter densities: 
+Again, a visual illustration of the puzzles with the [lowest](https://www.xwordinfo.com/Crossword?date=5/29/2011) and [highest](https://www.xwordinfo.com/Crossword?date=7/27/2012) letter densities: 
 
-![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/least_dense.png?raw=true) ![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/most_dense.png?raw=true)
+<img src="https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/least_dense.PNG?raw=true" width="400"> <img src="https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/most_dense.PNG?raw=true" width="400">
+
+Note that the puzzle on the left has a pretty cool maze theme to it. Wish I attempt it from scratch now!
 
 ### What words have emerged recently?
 
