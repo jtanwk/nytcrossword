@@ -128,6 +128,103 @@ crossword %>%
 
 ggsave("images/cw_length_hist.png", width = 8, height = 6)
 
+## Above, but represented by boxplots instead
+
+crossword %>%
+  filter(cwday != "NA") %>%
+  mutate(cwday = factor(cwday, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>%
+  mutate(wordlength = nchar(word)) %>%
+  ggplot(aes(x = cwday, y = wordlength)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(x = "Day of the Week",
+       y = "Number of Letters in Answer",
+       title = "Distribution of Answer Lengths by Day of the Week",
+       subtitle = "Using puzzles from the Shortz Era (1994-2017). Each point is a single crossword answer.")
+
+ggsave("images/cw_length_box.png", width = 8, height = 6)
+
+## Identifying the crosswords with the longest and shortest average answer length:
+
+crossword %>%
+  group_by(cwdate) %>%
+  summarise(avg = mean(nchar(word))) %>%
+  arrange(-avg)
+
+  # Shortest avg answer length: 2008-12-23
+  # Longest avg answer length: 2006-01-21
+
+## Does the number of blocks decrease by day, then? 
+
+puzzles <- crossword %>%
+  select(-c(X, dir, word)) %>%
+  distinct()
+
+puzzles %>%
+  filter(cwday != "NA") %>%
+  mutate(cwday = factor(cwday, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>%
+  mutate(cwdate = as.Date(cwdate)) %>%
+  select(cwdate, cwday, blockcount, spancount) %>%
+  ggplot(aes(x = cwdate, y = blockcount)) +
+  geom_point(aes(color = cwday),
+             show.legend = FALSE,
+             alpha = 0.3) +
+  scale_color_viridis(discrete = TRUE, option = "viridis") +
+  geom_smooth(color = "black",
+              size = 1.1,
+              method = 'lm', 
+              fill = NA) +
+  facet_wrap(~cwday, nrow = 1) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  scale_x_date(date_labels = "%Y",
+               date_breaks = "4 years",
+               date_minor_breaks = "4 years") +
+  scale_y_continuous(breaks = seq(10, 160, 20)) +
+  labs(x = "Day of the Week",
+       y = "Number of blocks in puzzle",
+       title = "Number of \"Blocks\" (Unused Spaces) by Day of the Week",
+       subtitle = "Using puzzles from the Shortz Era (1994-2017). Each point is a single crossword answer.")
+
+## Which puzzles had the least and most blocks?
+
+puzzles %>%
+  group_by(cwdate) %>%
+  arrange(-blockcount)
+
+  # Fewest blocks: 2012-07-27, 17 blocks
+  # Most blocks: 2011-05-29, 141 blocks
+  # From this, we can calculate puzzle density = number of letters on grid / total grid space
+
+puzzles %>%
+  mutate(density = ((rowcount * colcount) - blockcount) / (rowcount * colcount)) %>%
+  filter(cwday != "NA") %>%
+  mutate(cwday = factor(cwday, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>%
+  mutate(cwdate = as.Date(cwdate)) %>%
+  select(cwdate, cwday, density) %>%
+  ggplot(aes(x = cwdate, y = density)) +
+  geom_point(aes(color = cwday),
+             show.legend = FALSE,
+             alpha = 0.3) +
+  scale_color_viridis(discrete = TRUE, option = "viridis") +
+  geom_smooth(color = "black",
+              size = 1.1,
+              method = 'lm', 
+              fill = NA) +
+  facet_wrap(~cwday, nrow = 1) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  scale_x_date(date_labels = "%Y",
+               date_breaks = "4 years",
+               date_minor_breaks = "4 years") +
+  labs(x = "Day of the Week",
+       y = "Letter Density",
+       title = "Letter Density (Letters per Grid Space) by Day of the Week",
+       subtitle = "Using puzzles from the Shortz Era (1994-2017). Each point is a single crossword answer.")
+
+ggsave("images/cw_density_byday.png", width = 8, height = 6)
+
+
 ##### What are the most year-specific words? 
 
 year_words <- crossword %>%
