@@ -77,7 +77,7 @@ Again, a visual illustration of the puzzles with the [lowest](https://www.xwordi
 
 <img src="https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/least_dense.PNG?raw=true" width="400"> <img src="https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/most_dense.PNG?raw=true" width="400">
 
-Note that the puzzle on the left has a pretty cool maze theme to it. Wish I attempt it from scratch now!
+Note that the puzzle on the left has a pretty cool maze theme to it. Wish I could attempt it from scratch now!
 
 ### What words have emerged recently?
 
