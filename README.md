@@ -125,6 +125,27 @@ If unique to a year's crossword answer corpus, it looks like a given word only n
 
 What a beaut. (Also note that TTTTT, unlike the other two letters, only appeared twice and did not rank as important to 2013's corpus.)
 
+### How lexically diverse are crossword puzzles?
+
+The last thing I want to look at is lexical diversity. How rich and varied are the answers used in the puzzles? The most common way to measure this is the *Type-Token Ratio* - the ratio of unique words to total words in a corpus. The idea is this: if there are fewer repeated words, then TTR increases and vice versa. There's a great general explainer on [TTR](https://www.sltinfo.com/type-token-ratio/) here.
+
+As it's highly unlikely that answers repeat within a single puzzle, I've aggregated all the answers for each year's worth of crossword puzzles. Calculating the TTR by year and plotting it:
+
+![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/cw_ttr.png?raw=true)
+
+That's a stricter upward trend than I imagined. This tells us a few things:
+
+-   An TTR in the range of 0.53-0.58 tells us that there are roughly half as many unique answers as total answers used within each year.
+-   The TTR has grown by about 0.05 between 1994 and 2016 (I omitted 2017 due to the incomplete year). A puzzle in 2016 features about 5% more unique answers than a puzzle in 1994 would have.
+
+As before, the natural next question: how does lexical diversity vary by day of the week?
+
+![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/cw_ttr_byday.png?raw=true)
+
+-   Variation in TTR between days is *way* greater than between years. Saturdays have almost 15% more unique answers per total answer count than Mondays.
+-   Always interesting to note where Sunday falls on the spectrum - in this case, much closer in lexical diversity to Mondays/Tuesdays than the middle of the week.
+-   Note how the TTRs have jumped to the 0.80-0.95 range when disaggregating by day, compared to 0.5-0.6 when plotting by year. That's **super** interesting. One possible interpretation is that repeated words tend to be repeated *across* days rather than within them. But that's an exploration for another time.
+
 Further Steps
 -------------
 
