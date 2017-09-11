@@ -6,6 +6,7 @@
 
 # Setup
 library(tidyverse)
+library(plyr)
 library(tidytext)
 library(stringr)
 library(viridis) # colorblind-friendly palettes for charts
@@ -224,7 +225,6 @@ puzzles %>%
 
 ggsave("images/cw_density_byday.png", width = 8, height = 6)
 
-
 ##### What are the most year-specific words? 
 
 year_words <- crossword %>%
@@ -278,6 +278,68 @@ ggsave("images/cw_tf_idf_2017.png", width = 8, height = 6)
 crossword %>%
   filter(word == "SIRI") %>%
   count(year)
+
+
+##### How does lexical richness vary by day, year? Author? 
+# Great explainer on TTR at https://www.sltinfo.com/type-token-ratio/
+
+# Calculating Type-Token Ratio by Year
+
+crossword %>%
+  filter(year != "2017") %>%
+  ddply(~year, summarise, distinct_words = n_distinct(word), total_words = length(word)) %>%
+  mutate(TTR = distinct_words / total_words) %>%
+  ggplot(aes(x = year, y = TTR)) +
+  geom_point() +
+  geom_smooth(color = "grey", method = "lm", se = FALSE) +
+  theme_minimal() +
+  labs(x = "Year",
+       y = "Type-Token Ratio",
+       title = "Lexical Diversity of NYTimes Crosswords by Year",
+       subtitle = "Using puzzles from the Shortz Era (1994-2017). Lexical diversity is measured by Type Token Ratio (TTR), \nwhere TTR = (number of unique words) / (total number of words)")
+
+ggsave("images/cw_ttr.png", width = 8, height = 6)
+
+# Double checking my calculations above by generating TTR manually
+
+crossword %>%
+  filter(year == "2016") %>%
+  select(word) %>%
+  unlist() %>%
+  length()  # 30884 total words in 2016
+
+crossword %>%
+  filter(year == "2016") %>%
+  select(word) %>%
+  distinct() %>%
+  unlist() %>%
+  length()  # 17878 unique words in 2016
+
+# What about by year-day? 
+
+crossword %>%
+  filter(year != "2017") %>%
+  filter(cwday != "NA") %>%
+  mutate(cwday = factor(cwday, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>%
+  ddply(.(year, cwday), summarise, distinct_words = n_distinct(word), total_words = length(word)) %>%
+  mutate(TTR = distinct_words / total_words) %>%
+  ggplot(aes(x = year, y = TTR)) +
+  geom_point(aes(color = cwday),
+             show.legend = FALSE) +
+  scale_color_viridis(discrete = TRUE, option = "viridis") +
+  geom_smooth(color = "black",
+              method = 'lm', 
+              se = FALSE) +
+  facet_wrap(~cwday, nrow = 1) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  scale_x_continuous(breaks = seq(1996, 2016, 4)) +
+  labs(x = "Year",
+       y = "Type-Token Ratio",
+       title = "Lexical Diversity of NYTimes Crosswords by Day of the Week",
+       subtitle = "Using puzzles from the Shortz Era (1994-2017). Lexical diversity is measured by Type Token Ratio (TTR), \nwhere TTR = (number of unique words) / (total number of words)")
+
+ggsave("images/cw_ttr_byday.png", width = 8, height = 6)
 
 
 ########## Unanswered questions:
