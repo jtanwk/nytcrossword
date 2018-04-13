@@ -11,6 +11,13 @@ Meanwhile, my goal here (aside from indulging my inner crossword geek) is to try
 Getting The Data
 ----------------
 
+*EDIT: April 13, 2018*
+
+*After recent requests for me to release the original dataset, I contacted the people running XWord Info. They've since informed me that while XWord Info has an agreement with NYTimes, the underlying data is not in the public domain. I'm complying by (1) removing the scraper code, and (2) continuing not to distribute the underlying dataset.*
+
+*My personal understanding of the legal and ethical issues around web scraping is growing. In this case, lesson learned: ask website owners before you scrape their data!*
+
+
 I didn't scrape NYTimes.com itself. Why? Because crosswords tend to arrive blank, and I wanted answers. Instead, I used the `rvest` package and [Selector Gadget](http://selectorgadget.com/) to gather historical puzzle data from the amazing resource that is [XWord Info](https://www.xwordinfo.com/). If you scrape their website, I strongly suggest a donation to keep them going - I did. There's lots of wonderful data there that I've barely attempted to sift through. 
 
 Although the NYTimes crossword has been around since far earlier than 1994, I chose to only look at puzzles from the Will Shortz era (1994 - present). I've also chosen not to host the data here, but the [scraper code](https://github.com/jtanwk/nytcrossword/blob/master/1_crossword_scraper.R) is available as part of this repository.
