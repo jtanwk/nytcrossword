@@ -1,0 +1,442 @@
+---
+title: "24 Years of NYT Crossword Answers"
+author: "Jonathan Tan"
+date: "9/2/2017"
+output: 
+  html_notebook:
+    code_folding: hide
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.width = 8,
+                      fig.height = 6,
+                      fig.align = 'center')
+
+# Setup
+library(tidyverse)
+# library(plyr)
+library(here)
+library(tidytext)
+library(stringr)
+library(viridis)
+
+options(stringsAsFactors = FALSE)
+
+# Set custom theme
+theme_custom <- function(base_size = 12, base_family = "", 
+                         base_line_size = base_size/22,
+                         base_rect_size = base_size/22) {
+  theme_minimal(base_size = base_size, base_family = base_family,
+             base_line_size = base_line_size,
+             base_rect_size = base_rect_size) %+replace%
+    theme(panel.grid.minor = element_blank(),
+          panel.grid.major = element_line(color = "#EEEEEE"),
+          plot.title = element_text(family = "Asap SemiBold",
+                                    size = 16,
+                                    hjust = 0,
+                                    margin = margin(5, 0, 5, 0),
+                                    color = "#0F0F0F"),
+          plot.subtitle = element_text(family = "Asap",
+                                       size = 12,
+                                       hjust = 0,
+                                       margin = margin(0, 0, 10, 0),
+                                       color = "#3F3F3F"),
+          plot.caption = element_text(family = "Asap",
+                                      face = "italic",
+                                      size = 8,
+                                      hjust = 1,
+                                      margin = margin(5, 0, 0, 0)),
+          axis.ticks = element_blank(),
+          axis.title = element_text(family = "Asap SemiBold",
+                                   size = 12,
+                                   face = "plain",
+                                   margin = margin(10, 10, 10, 10)),
+          axis.text.x = element_text(family = "Asap",
+                                     size = 10,
+                                     face = "plain",
+                                     margin = margin(0, 0, 5, 0)),
+          axis.text.y = element_text(family = "Asap",
+                                     size = 10,
+                                     face = "plain",
+                                     margin = margin(0, 0, 0, 5)),          
+          legend.title = element_text(family = "Asap SemiBold",
+                                      size = 10,
+                                      color = "#3F3F3F"),
+          legend.text = element_text(family = "Asap",
+                                     size = 10,
+                                     color = "#3F3F3F"),
+          strip.text = element_text(family = "Asap Medium",
+                                    size = 10,
+                                    color = "#3F3F3F",
+                                    margin = margin(10, 10, 10, 10)))
+}
+```
+
+Doing the New York Times Crossword is the closest thing I have to an evening ritual. Most of the time, I'll tackle it before the day actually arrives - they launch at 10pm the night before (except Sunday's, which launches at 6pm on Saturday).
+
+Other people have already done pretty cool explorations of crossword text data. They've looked at at comparisons to the [Oxford English Dictionary](http://blog.nycdatascience.com/student-works/web-scraping/nyt-crossword-puzzle-approximately-cool-oed/) and the [Google Books](https://noahveltman.com/crossword/about.html) corpora respectively. My favorite piece so far: last year, the NYTimes themselves published an interactive piece exploring [the changing meanings of clues over the years](https://www.nytimes.com/interactive/2016/02/07/opinion/what-74-years-of-times-crosswords-say-about-the-words-we-use.html?mcubz=3).
+
+Meanwhile, my goal here (aside from indulging my inner crossword geek) is to try out a few new packages: website scraping with `rvest` and wrangling text data with `tidytext`.
+
+# Getting the Data
+
+*EDIT: April 13, 2018*
+
+*After recent requests for me to release the original dataset, I contacted the people running XWord Info. They've since informed me that while XWord Info has an agreement with NYTimes, the underlying data is not in the public domain. I'm complying by (1) removing the scraper code, and (2) continuing not to distribute the underlying dataset.*
+
+*My personal understanding of the legal and ethical issues around web scraping is growing. In this case, lesson learned: ask website owners before you scrape their data!*
+
+I didn't scrape NYTimes.com itself. Why? Because crosswords tend to arrive blank, and I wanted answers. Instead, I used the `rvest` package and [Selector Gadget](http://selectorgadget.com/) to gather historical puzzle data from the amazing resource that is [XWord Info](https://www.xwordinfo.com/). ~~If you scrape their website, I strongly suggest a donation to keep them going - I did. There's lots of wonderful data there that I've barely attempted to sift through.~~ 
+
+Although the NYTimes crossword has been around since far earlier than 1994, I chose to only look at puzzles from the Will Shortz era (1994 - present). Given the above, I've also chosen not to host the data here and have removed the scraper code from the repository.
+
+```{r, message = F, warning = F}
+# Import data
+crossword <- read.csv(here('data', 'processed_data', 'clean_crosswords.csv'),
+                      fileEncoding = "latin1") %>%
+  as.tbl()
+```
+
+# Some Questions
+
+### What are the most common answers?
+
+Starting off with something easy. What words pop up most frequently?
+
+```{r, message = F, warning = F}
+crossword %>%
+  count(word, sort = TRUE) %>%
+  head(5)
+```
+
+It looks like ERA is our winner, with 514 appearances since 1994, with AREA, ERE, ONE and ELI filling out the top 5. It's unsurprising that these are all short, vowel-heavy words. They're likely used as short fillers between the longer, more inflexible feature words.
+
+What about their frequency of use over time? Have some of these common words become more or less frequent? Plotting each word's number of appearances by year:
+
+```{r, fig.width = 8, fig.height = 6}
+crossword %>%
+  filter(word %in% c("ERA", "AREA", "ERE", "ONE", "ELI")) %>%
+  group_by(year) %>%
+  count(year, word, sort = TRUE) %>%
+  ##### 
+  ggplot(aes(x = year, y = n)) +
+  geom_point() +
+  geom_smooth(method = 'lm',
+              fill = NA) +
+  facet_wrap(~word) +
+  scale_x_continuous(breaks = seq(1996, 2016, 4)) +
+  labs(y = "Appearances per Year",
+       x = "Year",
+       title = "Appearance Frequency of Top 5 NYTimes Crossword Answers", 
+       subtitle = "Using puzzles from the Shortz Era (1994-2017)",
+       caption = "Data source: XWordInfo.com") +
+  theme_custom()
+
+ggsave(here("images", "cw_top5_freq.png"), width = 8, height = 6)
+```
+
+Short of a slight downward trend, nothing really convincing yet. What about the nature of the words themselves?
+
+### Are words getting longer? Shorter?
+
+The primary source of difficulty in puzzles, in my opinion, stems from giving you clues with any number of plausible answers. Unfortunately, as I was unable to scrape the clue text, we'll have to make do with a different proxy for puzzle difficulty: _average answer length_. 
+
+Why is this a useful proxy? Again, from purely anecdotal experience, the short answers are giveaways. They're there to provide much needed letter fragments for other longer answers that are much harder to guess from scratch. The more short answers there are, the more information you can easily lock down. Think of [*Wheel of Fortune*](https://en.wikipedia.org/wiki/Wheel_of_Fortune_(U.S._game_show)) - it's far easier to complete a phrase once you have most of the letters filled in than right at the start.
+
+Calculating the average length of all the crossword answers in each year, then plotting them:
+
+```{r, fig.width = 8, fig.height = 6}
+crossword %>%
+  mutate(cwdate = as.Date(cwdate)) %>%
+  group_by(cwdate) %>%
+  summarise(avg = mean(nchar(word))) %>%
+  ##### 
+  ggplot(aes(x = cwdate, y = avg)) +
+  geom_point(alpha = 0.1,
+             na.rm = TRUE) +
+  geom_smooth(method = 'lm',
+              color = "red",
+              size = 1.2,
+              fill = NA,
+              na.rm = TRUE) +
+  scale_y_continuous(breaks = seq(4, 8, 0.5)) +
+  labs(x = "Date of Publication", 
+       y = "Average Number of Letters in Puzzle",
+       title = "Average Length of NYTimes Crossword Answers",
+       subtitle = "Using puzzles from the Shortz Era (1994-2017). Each point represents one crossword puzzle.",
+       caption = "Data source: XWordInfo.com") +
+  theme_custom()
+
+ggsave(here("images", "cw_avglength.png"), width = 8, height = 6)
+```
+
+
+A weakly positive relationship, but this doesn't tell us much. Monday puzzles are designed to be far easier than Saturday puzzles, so it's likely that variation in word length between days will be far greater than within them. Plotting the average word length by day of the week, then year:
+
+```{r, fig.width = 8, fig.height = 6}
+crossword %>%
+  filter(cwday != "NA") %>%
+  mutate(cwday = factor(cwday, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>%
+  mutate(cwdate = as.Date(cwdate)) %>%
+  group_by(cwdate, cwday) %>%
+  summarise(avg = mean(nchar(word))) %>%
+  ##### 
+  ggplot(aes(x = cwdate, y = avg)) +
+  geom_point(aes(color = cwday),
+             show.legend = FALSE,
+             alpha = 0.3) +
+  scale_color_viridis(discrete = TRUE, option = "viridis") +
+  geom_smooth(color = "black",
+              size = 1.1,
+              method = 'lm', 
+              fill = NA) +
+  facet_wrap(~cwday, nrow = 1) +
+  scale_x_date(date_labels = "%Y",
+               date_breaks = "4 years",
+               date_minor_breaks = "4 years") +
+  scale_y_continuous(breaks = seq(4, 8, 0.5)) +
+  labs(x = "Date", 
+       y = "Average Letter Count",
+       title = "Average Length of NYTimes Crossword Answers by Day",
+       subtitle = "Using puzzles from the Shortz Era (1994-2017). Each point represents one crossword puzzle.",
+       caption = "Data source: XWordInfo.com") +
+  theme_custom() +
+  theme(axis.text.x = element_text(angle = 60,
+                                   hjust = 1,
+                                   margin = margin(0, 0, 10, 0)))
+
+ggsave(here("images", "cw_avglength_byday.png"), width = 8, height = 6)
+```
+
+
+Now we're getting somewhere. A few observations:
+
+-   You can see a puzzle's intended complexity reflected in the average word length for each day.
+-   Friday and Saturday words seem to be growing longer on average much faster than that of other days'.
+-   Sunday words, while described as comparable to Wednesdays or Thursdays in terms of difficulty, are probably a little longer on average to account for the larger grid.
+
+Now, what does this actually look like in practice? I took a look at XWordInfo.com for the two puzzles with the [shortest](https://www.xwordinfo.com/Crossword?date=12/23/2008) and [longest](https://www.xwordinfo.com/Crossword?date=1/21/2005) average answer length respectively:
+
+<img src="https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/short_puzzle.PNG?raw=true" width="400"> <img src="https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/long_puzzle.PNG?raw=true" width="400">
+
+Interesting note: both puzzles have roughly the same number of letters on the grid - the puzzle on the left has 45 "blocks" (black unused spaces) while the puzzle on the right has 38. That led me to look me at the *letter density* of a puzzle, calculated by the number of lettes on a grid / total grid space.
+
+### How does letter density vary by day? 
+
+Thankfully, one of the variables that I scraped was the block count for each puzzle. Again, blocks are the fully-black unused spaces on a puzzle grid. If grid sizes are staying the same but average letter count per answer is increasing, it follows that the letter density of each puzzle is increasing. It also seems like a good opportunity to find a standardized measure across puzzles of different grid sizes (looking at you, Sunday). But what does the data actually show?
+
+```{r}
+crossword %>%
+  select(-c(X, dir, word)) %>%
+  unique() %>%
+  mutate(density = ((rowcount * colcount) - blockcount) / (rowcount * colcount)) %>%
+  filter(cwday != "NA") %>%
+  mutate(cwday = factor(cwday, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>%
+  mutate(cwdate = as.Date(cwdate)) %>%
+  select(cwdate, cwday, density) %>%
+  ##### 
+  ggplot(aes(x = cwdate, y = density)) +
+  geom_point(aes(color = cwday),
+             show.legend = FALSE,
+             alpha = 0.3) +
+  scale_color_viridis(discrete = TRUE, option = "viridis") +
+  geom_smooth(color = "black",
+              size = 1,
+              method = 'lm', 
+              fill = NA) +
+  facet_wrap(~cwday, nrow = 1) +
+  scale_x_date(date_labels = "%Y",
+               date_breaks = "4 years",
+               date_minor_breaks = "4 years") +
+  labs(x = "Day of the Week",
+       y = "Letter Density",
+       title = "Letter Density (Letters per Grid Space) by Day of the Week",
+       subtitle = "Using puzzles from the Shortz Era (1994-2017). Each point represents a one crossword puzzle.",
+       caption = "Data source: XWordInfo.com") +
+  theme_custom() +
+  theme(axis.text.x = element_text(angle = 60,
+                                   hjust = 1,
+                                   margin = margin(0, 0, 10, 0)))
+
+ggsave(here("images", "cw_density_byday.png"), width = 8, height = 6)
+```
+
+
+As expected. The only minor surprise here is that the range of letter densities seems to be a little narrower on Sundays than the rest of the week - I'm interpreting that as a regression to the mean.
+
+Again, a visual illustration of the puzzles with the [lowest](https://www.xwordinfo.com/Crossword?date=5/29/2011) and [highest](https://www.xwordinfo.com/Crossword?date=7/27/2012) letter densities from XWordInfo.com: 
+
+<img src="https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/least_dense.PNG?raw=true" width="400"> <img src="https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/most_dense.PNG?raw=true" width="400">
+
+Note that the puzzle on the left has a pretty cool maze theme to it. Wish I could attempt it from scratch now!
+
+### What words have emerged recently?
+
+When different words or phrases enter the lexicon, it's only a matter of time before they're referenced in popular media. I wanted to find the words that only became popular (in terms of the crossword) in recent years.
+
+To do this, I'm leveraging the concept of *term frequency-inverse document frequency* (td-idf). From Julia Silge's also-amazing resource, [Text Mining with R](http://tidytextmining.com/tfidf.html):
+
+> The statistic **tf-idf** is intended to measure how important a word is to a document in a collection (or corpus) of documents, for example, to one novel in a collection of novels or to one website in a collection of websites.
+
+If we treat each year as separate "documents", we should be able to figure out what words are most important to each year. This is easily done using `tidytext::bind_tf_idf`:
+
+```{r}
+crossword %>%
+  count(year, word, sort = TRUE) %>%
+  ungroup() %>%
+  bind_tf_idf(word, year, n) %>%
+  arrange(desc(tf_idf))
+```
+
+Some curious results already, but we'll have to dig deeper to get anything particularly interesting.
+
+Plotting the words most important to the last 5 years:
+
+```{r}
+crossword %>%
+  count(year, word, sort = TRUE) %>%
+  ungroup() %>%
+  bind_tf_idf(word, year, n) %>%
+  arrange(desc(tf_idf)) %>%
+  mutate(word = factor(word, levels = rev(unique(word)))) %>%
+  filter(year >= 2013) %>%
+  group_by(year) %>%
+  top_n(5, tf_idf) %>%
+  ungroup() %>%
+  #####
+  ggplot(aes(x = word, y = tf_idf, fill = year)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~year, 
+             ncol = 2, 
+             scales = "free") +
+  coord_flip() +
+  scale_fill_viridis_c() +
+  labs(title = "Most Year-Unique Crossword Answers, 2013-2017",
+       subtitle = "As determined by tf-idf scores for single-year corpora.",
+       x = NULL,
+       y = "TF-IDF score",
+       caption = "Data source: XWordInfo.com") +
+  theme_custom() +
+  theme(axis.text.y = element_text(hjust = 1),
+        strip.text = element_text(margin = margin(0, 0, 5, 0)))
+
+ggsave(here("images", "cw_tf_idf.png"), width = 8, height = 6)
+```
+
+There you have it: 2017 is the year of the \#BAE. In fact, it's been used as an answer this year four whole times so far, and not once before. But what does identifying a word as "important" to a particular document _actually_ look like in terms of appearance frequency? Plotting how often each of 2017's important words appeared by year:
+
+```{r}
+crossword %>%
+  filter(word %in% c("BAE", "LGBT", "IDRISELBA", "ABBACY", "ETSY", "NSFW")) %>%
+  mutate(word = factor(word, levels = c("BAE", "LGBT", "IDRISELBA", "ABBACY", "ETSY", "NSFW"))) %>%
+  count(year, word, sort = TRUE) %>%
+  ggplot(aes(x = year, y = n, fill = word)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~word, ncol = 2) +
+  scale_fill_viridis_d() +
+  scale_x_continuous(breaks = seq(2007, 2017, 2)) +
+  labs(x = NULL, 
+       y = "Number of Appearances",
+       title = "Appearance Frequency for 2017's \"Important\" Answers",
+       subtitle = "As determined by tf-idf scores for single-year corpora.",
+       caption = "Data source: XWordInfo.com") +
+  theme_custom()
+
+ggsave(here("images", "cw_tf_idf_2017.png"), width = 8, height = 6)
+```
+
+
+If unique to a year's crossword answer corpus, it looks like a given word only needs to appear as few as 3-4 times within that year - unsurprising when you consider that most other words are used a handful of times across all time at best. Other observations:
+
+-   ETSY actually peaked in 2016 (so far), and you'll notice that it appears as \#3 on 2016's important words as well. 
+-   SIRI also ranks high twice in the last five years. It was lauched with the iPhone 4S in late 2011, so it makes sense that it'd take until 2013/2014 at the earliest for the word to become popular enough to use as a crossword clue.
+-   A manual look at the clues for IDRISELBA cited his roles in *The Wire* (2002-2004) once and *Mandela: Long Walk to Freedom* (2013) twice. Interestingly enough, no mention of the four films he's been in this year ( *Thor: Ragnarok* , *The Mountain Between Us*, *The Dark Tower* and *Molly's Game* ).
+-   What's the deal with CCCCC and UUUUU in 2013? A count by date shows that both answers actually appeared three distinct times, _all in the same puzzle_. I looked the puzzle up out of curiosity and was faced with this monster, courtesy of Jeff Chen:
+
+![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/ccccc.PNG?raw=true)
+
+What a beaut. (Also note that TTTTT, unlike the other two letters, only appeared twice and did not rank as important to 2013's corpus.)
+
+### How lexically diverse are crossword puzzles?
+
+The last thing I want to look at is lexical diversity. How rich and varied are the answers used in the puzzles? The most common way to measure this is the *Type-Token Ratio* - the ratio of unique words to total words in a corpus. The idea is this: if there are fewer repeated words, then TTR increases and vice versa. There's a great general explainer on [TTR](https://www.sltinfo.com/type-token-ratio/) here.
+
+As it's highly unlikely that answers repeat within a single puzzle, I've aggregated all the answers for each year's worth of crossword puzzles. Calculating the TTR by year and plotting it:
+
+```{r}
+crossword %>%
+  filter(year != "2017") %>%
+  plyr::ddply(~year, summarise, distinct_words = n_distinct(word), total_words = length(word)) %>%
+  mutate(TTR = distinct_words / total_words) %>%
+  ggplot(aes(x = year, y = TTR)) +
+  geom_point() +
+  geom_smooth(color = "grey", 
+              linetype = "dashed",
+              size = 0.5,
+              method = "lm", 
+              se = FALSE) +
+  labs(x = "Year",
+       y = "Type-Token Ratio",
+       title = "Lexical Diversity of NYTimes Crosswords by Year",
+       subtitle = "Using puzzles from the Shortz Era (1994-2017). Lexical diversity is measured by Type Token Ratio \n(TTR), where TTR = (number of unique words) / (total number of words)",
+       caption = "Data source: XWordInfo.com") +
+  theme_custom()
+
+ggsave(here("images", "cw_ttr.png"), width = 8, height = 6)
+```
+
+That's a stricter upward trend than I imagined. This tells us a few things:
+
+-   An TTR in the range of 0.53-0.58 tells us that there are roughly half as many unique answers as total answers used within each year.
+-   The TTR has grown by about 0.05 between 1994 and 2016 (I omitted 2017 due to the incomplete year). A puzzle in 2016 features about 5% more unique answers than a puzzle in 1994 would have.
+
+As before, the natural next question: how does lexical diversity vary by day of the week?
+
+```{r}
+crossword %>%
+  filter(year != "2017") %>%
+  filter(cwday != "NA") %>%
+  mutate(cwday = factor(cwday, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>%
+  plyr::ddply(plyr::.(year, cwday), summarise, distinct_words = n_distinct(word), total_words = length(word)) %>%
+  mutate(TTR = distinct_words / total_words) %>%
+  ggplot(aes(x = year, y = TTR)) +
+  geom_point(aes(color = cwday),
+             show.legend = FALSE) +
+  scale_color_viridis(discrete = TRUE, option = "viridis") +
+  geom_smooth(color = "grey",
+              linetype = "dashed",
+              size = 0.5,
+              method = 'lm', 
+              se = FALSE) +
+  facet_wrap(~cwday, nrow = 1) +
+  scale_x_continuous(breaks = seq(1996, 2016, 4)) +
+  labs(x = "Year",
+       y = "Type-Token Ratio",
+       title = "Lexical Diversity of NYTimes Crosswords by Day of the Week",
+       subtitle = "Using puzzles from the Shortz Era (1994-2017). Lexical diversity is measured by Type Token Ratio \n(TTR), where TTR = (number of unique words) / (total number of words)",
+       caption = "Data source: XWordInfo.com") +
+  theme_custom() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+ggsave(here("images", "cw_ttr_byday.png"), width = 8, height = 6)
+```
+
+-   Variation in TTR between days is *way* greater than between years. Saturdays have almost 15% more unique answers per total answer count than Mondays.
+-   Always interesting to note where Sunday falls on the spectrum - in this case, much closer in lexical diversity to Mondays/Tuesdays than the middle of the week.
+-   Note how the TTRs have jumped to the 0.80-0.95 range when disaggregating by day, compared to 0.5-0.6 when plotting by year. That's **super** interesting. One possible interpretation is that repeated words tend to be repeated *across* days rather than within them. But that's an exploration for another time.
+
+# Further Steps
+
+There were lots of ideas that I played around with that were either less compelling, difficult to execute or outside the scope of what I wanted to do here today. I welcome you to take a stab at them. Here are a few:
+
+-   What first names appear most often? Do male and female names appear with the same frequency?
+-   As above, but with cities and continental representation.
+-   What languages are represented the most? Many loanwords or straight-up foreign language words exist in the crossword but are very difficult to detect computationally out of the context of a sentence.
+-   Who are the most prolific crossword submitters, and do they have distinct lexical differences between them?
+-   Any analysis involving the text of the crossword *clues* and not just the answers.
+-   Any analysis involving data surrounding user behaviors possible on NYTimes (e.g. solve times, checking answers, mobile vs. browser activity)

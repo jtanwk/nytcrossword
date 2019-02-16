@@ -1,0 +1,4 @@
+/data
+/scripts/1_crossword_scraper.R
+*.RData
+.Rproj.user
