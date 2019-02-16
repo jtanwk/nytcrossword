@@ -2,3 +2,5 @@
 /scripts/1_crossword_scraper.R
 *.RData
 .Rproj.user
+.Rhistory
+.DS_Store
