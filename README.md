@@ -1,166 +1,29 @@
-24 Years of NYTimes Crossword Answers
-================
+# 24 Years of NYTimes Crossword answers
+
 September 2, 2017
 
-Doing the New York Times Crossword is the closest thing I have to an evening ritual. Most of the time, I'll tackle it before the day actually arrives - they launch at 10pm the night before (except Sunday's, which launches at 6pm on Saturday).
+[View the notebook here](https://jtanwk.github.io/nytcrossword/)
 
-Other people have already done pretty cool explorations of crossword text data. They've looked at at comparisons to the [Oxford English Dictionary](http://blog.nycdatascience.com/student-works/web-scraping/nyt-crossword-puzzle-approximately-cool-oed/) and the [Google Books](https://noahveltman.com/crossword/about.html) corpora respectively. My favorite piece so far: last year, the NYTimes themselves published an interactive piece exploring [the changing meanings of clues over the years](https://www.nytimes.com/interactive/2016/02/07/opinion/what-74-years-of-times-crosswords-say-about-the-words-we-use.html?mcubz=3).
+## Description
 
-Meanwhile, my goal here (aside from indulging my inner crossword geek) is to try out a few new packages: website scraping with `rvest` and wrangling text data with `tidytext`.
+Exploratory data analysis of 24 years of New York Times Crossword answers. I use data visualization and computational linguistics concepts to discover trends in the Shortz-era puzzles (1994 - present).
 
-Getting The Data
-----------------
+Questions include:
+-   What are the most common answers?
+-   Are words getting longer? Shorter?
+-   How does puzzle letter density vary by day?
+-   What words have emerged in the crossword only in the past few years?
+-   How lexically diverse are the puzzles?
 
-*EDIT: April 13, 2018*
+## Dependencies
 
-*After recent requests for me to release the original dataset, I contacted the people running XWord Info. They've since informed me that while XWord Info has an agreement with NYTimes, the underlying data is not in the public domain. I'm complying by (1) removing the scraper code, and (2) continuing not to distribute the underlying dataset.*
+-   `tidyverse` for everything
+-   `plyr` for data wrangling
+-   `here` for OS-agnostic file paths
+-   `tidytext` for text analysis methods
+-   `stringr` for string-manipulation operations
+-   `viridis` for a simple, colorblind-friendly palette
 
-*My personal understanding of the legal and ethical issues around web scraping is growing. In this case, lesson learned: ask website owners before you scrape their data!*
+## Data Sources
 
-
-I didn't scrape NYTimes.com itself. Why? Because crosswords tend to arrive blank, and I wanted answers. Instead, I used the `rvest` package and [Selector Gadget](http://selectorgadget.com/) to gather historical puzzle data from the amazing resource that is [XWord Info](https://www.xwordinfo.com/). If you scrape their website, I strongly suggest a donation to keep them going - I did. There's lots of wonderful data there that I've barely attempted to sift through. 
-
-Although the NYTimes crossword has been around since far earlier than 1994, I chose to only look at puzzles from the Will Shortz era (1994 - present). I've also chosen not to host the data here, but the [scraper code](https://github.com/jtanwk/nytcrossword/blob/master/1_crossword_scraper.R) is available as part of this repository.
-
-Some Questions
---------------
-
-### What are the most common answers?
-
-Starting off with something easy. What words pop up most frequently?
-
-    ## # A tibble: 5 × 2
-    ##    word     n
-    ##   <chr> <int>
-    ## 1   ERA   514
-    ## 2  AREA   458
-    ## 3   ERE   428
-    ## 4   ONE   425
-    ## 5   ELI   411
-
-It looks like ERA is our winner, with 514 appearances since 1994, with AREA, ERE, ONE and ELI filling out the top 5. It's unsurprising that these are all short, vowel-heavy words. They're likely used as short fillers between the longer, more inflexible feature words.
-
-What about their frequency of use over time? Have some of these common words become more or less frequent? Plotting each word's number of appearances by year:
-
-![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/cw_top5_freq.png?raw=true)
-
-Short of a slight downward trend, nothing really convincing yet. What about the nature of the words themselves?
-
-### Are words getting longer? Shorter?
-
-The primary source of difficulty in puzzles, in my opinion, stems from giving you clues with any number of plausible answers. Unfortunately, as I was unable to scrape the clue text, we'll have to make do with a different proxy for puzzle difficulty: _average answer length_. 
-
-Why is this a useful proxy? Again, from purely anecdotal experience, the short answers are giveaways. They're there to provide much needed letter fragments for other longer answers that are much harder to guess from scratch. The more short answers there are, the more information you can easily lock down. Think of [*Wheel of Fortune*](https://en.wikipedia.org/wiki/Wheel_of_Fortune_(U.S._game_show)) - it's far easier to complete a phrase once you have most of the letters filled in than right at the start.
-
-Calculating the average length of all the crossword answers in each year, then plotting them:
-
-![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/cw_avglength.png?raw=true)
-
-A weakly positive relationship, but this doesn't tell us much. Monday puzzles are designed to be far easier than Saturday puzzles, so it's likely that variation in word length between days will be far greater than within them. Plotting the average word length by day of the week, then year:
-
-![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/cw_avglength_byday.png?raw=true)
-
-Now we're getting somewhere. A few observations:
-
--   You can see a puzzle's intended complexity reflected in the average word length for each day.
--   Friday and Saturday words seem to be growing longer on average much faster than that of other days'.
--   Sunday words, while described as comparable to Wednesdays or Thursdays in terms of difficulty, are probably a little longer on average to account for the larger grid.
-
-Now, what does this actually look like in practice? I pulled screenshots of the two puzzles with the [shortest](https://www.xwordinfo.com/Crossword?date=12/23/2008) and [longest](https://www.xwordinfo.com/Crossword?date=1/21/2005) average answer length respectively:
-
-<img src="https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/short_puzzle.PNG?raw=true" width="400"> <img src="https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/long_puzzle.PNG?raw=true" width="400">
-
-Interesting note: both puzzles have roughly the same number of letters on the grid - the puzzle on the left has 45 "blocks" (black unused spaces) while the puzzle on the right has 38. That led me to look me at the *letter density* of a puzzle, calculated by the number of lettes on a grid / total grid space.
-
-### How does letter density vary by day? 
-
-Thankfully, one of the variables that I scraped was the block count for each puzzle. Again, blocks are the fully-black unused spaces on a puzzle grid. If grid sizes are staying the same but average letter count per answer is increasing, it follows that the letter density of each puzzle is increasing. It also seems like a good opportunity to find a standardized measure across puzzles of different grid sizes (looking at you, Sunday). But what does the data actually show?
-
-![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/cw_density_byday.png?raw=true)
-
-As expected. The only minor surprise here is that the range of letter densities seems to be a little narrower on Sundays than the rest of the week - I'm interpreting that as a regression to the mean.
-
-Again, a visual illustration of the puzzles with the [lowest](https://www.xwordinfo.com/Crossword?date=5/29/2011) and [highest](https://www.xwordinfo.com/Crossword?date=7/27/2012) letter densities: 
-
-<img src="https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/least_dense.PNG?raw=true" width="400"> <img src="https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/most_dense.PNG?raw=true" width="400">
-
-Note that the puzzle on the left has a pretty cool maze theme to it. Wish I could attempt it from scratch now!
-
-### What words have emerged recently?
-
-When different words or phrases enter the lexicon, it's only a matter of time before they're referenced in popular media. I wanted to find the words that only became popular (in terms of the crossword) in recent years.
-
-To do this, I'm leveraging the concept of *term frequency-inverse document frequency* (td-idf). From Julia Silge's also-amazing resource, [Text Mining with R](http://tidytextmining.com/tfidf.html):
-
-> The statistic **tf-idf** is intended to measure how important a word is to a document in a collection (or corpus) of documents, for example, to one novel in a collection of novels or to one website in a collection of websites.
-
-If we treat each year as separate "documents", we should be able to figure out what words are most important to each year. This is easily done using `tidytext::bind_tf_idf`:
-
-    ## # A tibble: 412,230 × 6
-    ##     year            word     n           tf      idf       tf_idf
-    ##    <int>           <chr> <int>        <dbl>    <dbl>        <dbl>
-    ## 1   2017             BAE     4 0.0002075765 3.178054 0.0006596894
-    ## 2   2015          BLANKS     8 0.0002590170 2.484907 0.0006436331
-    ## 3   2000            TTTT     8 0.0002568548 2.484907 0.0006382602
-    ## 4   2017            LGBT     5 0.0002594707 2.079442 0.0005395541
-    ## 5   2017       IDRISELBA     3 0.0001556824 3.178054 0.0004947671
-    ## 6   2016 LAIDITONTHELINE     4 0.0001296849 3.178054 0.0004121455
-    ## 7   2016          ROMCOM     4 0.0001296849 3.178054 0.0004121455
-    ## 8   2017          ABBACY     3 0.0001556824 2.484907 0.0003868563
-    ## 9   2017            ETSY     4 0.0002075765 1.791759 0.0003719272
-    ## 10  2017            NSFW     4 0.0002075765 1.791759 0.0003719272
-    ## # ... with 412,220 more rows
-
-Some curious results already, but we'll have to dig deeper to get anything particularly interesting.
-
-Plotting the words most important to the last 5 years:
-
-![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/cw_tf_idf.png?raw=true)
-
-There you have it: 2017 is the year of the \#BAE. In fact, it's been used as an answer this year four whole times so far, and not once before. But what does identifying a word as "important" to a particular document _actually_ look like in terms of appearance frequency? Plotting how often each of 2017's important words appeared by year:
-
-![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/cw_tf_idf_2017.png?raw=true)
-
-If unique to a year's crossword answer corpus, it looks like a given word only needs to appear as few as 3-4 times within that year - unsurprising when you consider that most other words are used a handful of times across all time at best. Other observations:
-
--   ETSY actually peaked in 2016 (so far), and you'll notice that it appears as \#3 on 2016's important words as well. 
--   SIRI also ranks high twice in the last five years. It was lauched with the iPhone 4S in late 2011, so it makes sense that it'd take until 2013/2014 at the earliest for the word to become popular enough to use as a crossword clue.
--   A manual look at the clues for IDRISELBA cited his roles in *The Wire* (2002-2004) once and *Mandela: Long Walk to Freedom* (2013) twice. Interestingly enough, no mention of the four films he's been in this year ( *Thor: Ragnarok* , *The Mountain Between Us*, *The Dark Tower* and *Molly's Game* ).
--   What's the deal with CCCCC and UUUUU in 2013? A count by date shows that both answers actually appeared three distinct times, _all in the same puzzle_. I looked the puzzle up out of curiosity and was faced with this monster, courtesy of Jeff Chen:
-
-![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/ccccc.PNG?raw=true)
-
-What a beaut. (Also note that TTTTT, unlike the other two letters, only appeared twice and did not rank as important to 2013's corpus.)
-
-### How lexically diverse are crossword puzzles?
-
-The last thing I want to look at is lexical diversity. How rich and varied are the answers used in the puzzles? The most common way to measure this is the *Type-Token Ratio* - the ratio of unique words to total words in a corpus. The idea is this: if there are fewer repeated words, then TTR increases and vice versa. There's a great general explainer on [TTR](https://www.sltinfo.com/type-token-ratio/) here.
-
-As it's highly unlikely that answers repeat within a single puzzle, I've aggregated all the answers for each year's worth of crossword puzzles. Calculating the TTR by year and plotting it:
-
-![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/cw_ttr.png?raw=true)
-
-That's a stricter upward trend than I imagined. This tells us a few things:
-
--   An TTR in the range of 0.53-0.58 tells us that there are roughly half as many unique answers as total answers used within each year.
--   The TTR has grown by about 0.05 between 1994 and 2016 (I omitted 2017 due to the incomplete year). A puzzle in 2016 features about 5% more unique answers than a puzzle in 1994 would have.
-
-As before, the natural next question: how does lexical diversity vary by day of the week?
-
-![](https://raw.githubusercontent.com/jtanwk/nytcrossword/master/images/cw_ttr_byday.png?raw=true)
-
--   Variation in TTR between days is *way* greater than between years. Saturdays have almost 15% more unique answers per total answer count than Mondays.
--   Always interesting to note where Sunday falls on the spectrum - in this case, much closer in lexical diversity to Mondays/Tuesdays than the middle of the week.
--   Note how the TTRs have jumped to the 0.80-0.95 range when disaggregating by day, compared to 0.5-0.6 when plotting by year. That's **super** interesting. One possible interpretation is that repeated words tend to be repeated *across* days rather than within them. But that's an exploration for another time.
-
-Further Steps
--------------
-
-There were lots of ideas that I played around with that were either less compelling, difficult to execute or outside the scope of what I wanted to do here today. I welcome you to take a stab at them. Here are a few:
-
--   What first names appear most often? Do male and female names appear with the same frequency?
--   As above, but with cities and continental representation.
--   What languages are represented the most? Many loanwords or straight-up foreign language words exist in the crossword but are very difficult to detect computationally out of the context of a sentence.
--   Who are the most prolific crossword submitters, and do they have distinct lexical differences between them?
--   Any analysis involving the text of the crossword *clues* and not just the answers.
--   Any analysis involving data surrounding user behaviors possible on NYTimes (e.g. solve times, checking answers, mobile vs. browser activity)
+The original dataset for this project was scraped from XWordInfo.com. Upon their request, however, I have taken down my scraper code and removed the dataset from this repository. [Read the notebook for more details](https://jtanwk.github.io/nytcrossword/).
